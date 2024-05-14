@@ -4,9 +4,12 @@ import { createContext } from 'react';
 const ws_server = 'http://localhost:8000';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const SocketContext = createContext<any | null>(null);
+export const SocketContext = createContext<any | null>(null);
 
-const socket = SocketIoClient(ws_server);
+const socket = SocketIoClient(ws_server, {
+    withCredentials: false,
+    transports: ['polling', 'websocket']
+});
 
 interface props {
     children: React.ReactNode;
@@ -14,7 +17,7 @@ interface props {
 
 export const SocketProvider: React.FC<props> = ({ children }) => {
     return (
-        <SocketContext.Provider value={socket}>
+        <SocketContext.Provider value={{socket}}>
             {children}
         </SocketContext.Provider>
     );
