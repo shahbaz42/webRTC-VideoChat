@@ -8,12 +8,11 @@ const roomHandler = (socket: Socket) => {
     const createNewRoom = () => {
         const roomId = uuidv4(); // Create a random room ID
         socket.join(roomId); // Join the room
-        socket.emit("room-created", roomId); // Emit an event to the client with the room ID
-        console.log("Room created", roomId)
+        socket.emit("new-room-created", roomId); // Emit an event to the client with the room ID
     };
 
-    const joinExistingRoom = () => {
-        console.log("Joining room");
+    const joinExistingRoom = ({roomId}: {roomId: string}) => {
+        console.log("User has joined the room: ", roomId);
     };
 
     socket.on("create-new-room", createNewRoom);
