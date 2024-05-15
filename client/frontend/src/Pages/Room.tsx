@@ -4,11 +4,17 @@ import { SocketContext } from "../Context/SocketContext";
 
 const Room: React.FC = () => {
   const { id } = useParams();
-  const { socket } = useContext(SocketContext);
+  const { socket, user } = useContext(SocketContext);
 
   useEffect(() => {
-    socket.emit("join-existing-room", { roomId: id });
-  }, []);
+    if (user){
+      socket.emit("join-existing-room", {
+        roomId: id,
+        peerId: user._id,
+      });
+
+    }
+  }, [id, user, socket]);
 
   return <div>roomId: {id}</div>;
 };
