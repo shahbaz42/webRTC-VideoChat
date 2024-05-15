@@ -21,6 +21,7 @@ interface props {
 export const SocketProvider: React.FC<props> = ({ children }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState<Peer>();
+  const [stream, setStream] = useState<MediaStream>();
 
   const fetchParticapantsList = ({
     roomId,
@@ -32,10 +33,17 @@ export const SocketProvider: React.FC<props> = ({ children }) => {
     console.log("Participants in room: ", roomId, participants);
   };
 
+  const fetchUserFeed = async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    setStream(stream);
+  }
+
   useEffect(() => {
     const userId = uuidv4();
     const newpeer = new Peer(userId);
     setUser(newpeer);
+
+    fetchUserFeed();
 
     const enterRoom = (roomId: string) => {
       navigate(`/room/${roomId}`);
@@ -45,7 +53,7 @@ export const SocketProvider: React.FC<props> = ({ children }) => {
   }, []);
 
   return (
-    <SocketContext.Provider value={{ socket, user }}>
+    <SocketContext.Provider value={{ socket, user, stream }}>
       {children}
     </SocketContext.Provider>
   );

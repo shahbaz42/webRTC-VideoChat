@@ -1,4 +1,4 @@
-import CreateRoom from "../Components/createRoom";
+import CreateRoom from "../Components/CreateRoom";
 
 const Home: React.FC = () => {
   return (
