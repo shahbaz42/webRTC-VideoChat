@@ -1,8 +1,10 @@
 import SocketIoClient from "socket.io-client";
-import { createContext, useEffect, useState } from "react";
+import { createContext, useEffect, useReducer, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Peer } from "peerjs";
 import { v4 as uuidv4 } from "uuid";
+import { peerReducer } from "../Reducers/peerReducers";
+import { addPeerAction } from "../Actions/peerAction";
 
 const ws_server = "http://localhost:8000";
 
@@ -23,6 +25,8 @@ export const SocketProvider: React.FC<props> = ({ children }) => {
   const [user, setUser] = useState<Peer>();
   const [stream, setStream] = useState<MediaStream>();
 
+  const [peers, dispatch] = useReducer(peerReducer, {});
+
   const fetchParticapantsList = ({
     roomId,
     participants,
@@ -34,13 +38,20 @@ export const SocketProvider: React.FC<props> = ({ children }) => {
   };
 
   const fetchUserFeed = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true,
+    });
     setStream(stream);
-  }
+  };
 
   useEffect(() => {
     const userId = uuidv4();
-    const newpeer = new Peer(userId);
+    const newpeer = new Peer(userId, {
+      host: "localhost",
+      port: 9000,
+      path: "/myapp",
+    });
     setUser(newpeer);
 
     fetchUserFeed();
@@ -52,8 +63,33 @@ export const SocketProvider: React.FC<props> = ({ children }) => {
     socket.on("get-users", fetchParticapantsList);
   }, []);
 
+  useEffect(() => {
+    if (!user || !stream) return;
+
+    socket.on("user-joined", ({ peerId }) => {
+      const call = user.call(peerId, stream);
+      console.log("calling the new peer", peerId);
+
+      call.on("stream", () => {
+        dispatch(addPeerAction(peerId, stream));
+      });
+    });
+
+    user.on("call", (call) => {
+      // what to do when other group call you  when you joined.
+      console.log("receiving call from ", call.peer);
+
+      call.answer(stream);
+      call.on("stream", () => {
+        dispatch(addPeerAction(call.peer, stream));
+      });
+    });
+
+    socket.emit("ready");
+  }, [user, stream]);
+
   return (
-    <SocketContext.Provider value={{ socket, user, stream }}>
+    <SocketContext.Provider value={{ socket, user, stream, peers }}>
       {children}
     </SocketContext.Provider>
   );
