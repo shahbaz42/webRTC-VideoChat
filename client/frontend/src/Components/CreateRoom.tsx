@@ -13,7 +13,7 @@ const CreateRoom: React.FC = () => {
     return (
         <button 
             onClick={initRoom}
-            className="btn btn-secondary"
+            className="btn btn-primary"
         >
             Start a new meeting in a new room.
         </button>

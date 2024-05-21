@@ -12,8 +12,9 @@ const UserFeedPlayer: React.FC<{ stream?: MediaStream }> = ({ stream }) => {
   return (
     <>
       <video
+        className="rounded-xl object-cover "
         ref={videoRef}
-        style={{ width: "300px", height: "200px" }}
+        style={{  }}
         muted={false}
         autoPlay
       />
