@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import { peerReducer } from "../Reducers/peerReducers";
 import { addPeerAction } from "../Actions/peerAction";
 
-const ws_server = "15.207.178.77:8008";
+const ws_server = "webrtcserver.shahbaz42.live";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const SocketContext = createContext<any | null>(null);
@@ -48,8 +48,7 @@ export const SocketProvider: React.FC<props> = ({ children }) => {
   useEffect(() => {
     const userId = uuidv4();
     const newpeer = new Peer(userId, {
-      host: "15.207.178.77",
-      port: 8008,
+      host: "https://webrtcserver.shahbaz42.live/peerjs",
       path: "/peerjs",
     });
     setUser(newpeer);
