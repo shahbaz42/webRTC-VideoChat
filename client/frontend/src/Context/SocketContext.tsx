@@ -66,7 +66,7 @@ export const SocketProvider: React.FC<props> = ({ children }) => {
       const call = user.call(peerId, stream);
       console.log("calling the new peer", peerId);
 
-      call.on("stream", () => {
+      call.on("stream", (stream) => {
         dispatch(addPeerAction(peerId, stream));
       });
     });
