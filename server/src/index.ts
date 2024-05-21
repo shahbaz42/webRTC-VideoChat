@@ -4,11 +4,12 @@ import { Server } from "socket.io";
 import http from "http";
 import cors from 'cors';
 import roomHandler from "./handlers/roomHandler";
-import { PeerServer } from "peer";
+import { ExpressPeerServer } from "peer";
 
 const app = express();
 
 app.use(cors());
+app.enable("trust proxy");
 
 const server = http.createServer(app);
 
@@ -29,9 +30,13 @@ io.on("connection", (socket) => {
     });
 });
 
-const peerServer = PeerServer({ port: 9000, path: "/myapp" });
-console.log(`Peer Server is running on port 9000`);
+const peerServer = ExpressPeerServer(server, {
+	path: "/",
+});
+
+app.use("/peerjs", peerServer);
 
 server.listen(ServerConfig.PORT, () => {
     console.log(`Server is running on port ${ServerConfig.PORT}`);
 });
+
