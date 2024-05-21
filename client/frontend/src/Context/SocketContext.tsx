@@ -49,8 +49,8 @@ export const SocketProvider: React.FC<props> = ({ children }) => {
     const userId = uuidv4();
     const newpeer = new Peer(userId, {
       host: "webrtcserver.shahbaz42.live",
-      port: 443,
-      path: "/peerjs",
+      port: 8007,
+      path: "/myapp",
       secure: true,
     });
     setUser(newpeer);

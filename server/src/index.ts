@@ -34,7 +34,7 @@ const peerServer = ExpressPeerServer(server, {
 	path: "/",
 });
 
-app.use("/peerjs", peerServer);
+app.use("/myapp", peerServer);
 
 server.listen(ServerConfig.PORT, () => {
     console.log(`Server is running on port ${ServerConfig.PORT}`);
