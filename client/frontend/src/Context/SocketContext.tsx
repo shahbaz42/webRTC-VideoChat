@@ -25,6 +25,9 @@ export const SocketProvider: React.FC<props> = ({ children }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState<Peer>();
   const [stream, setStream] = useState<MediaStream>();
+  const [disconnect, setDisconnect] = useState<boolean>(false);
+  const [muteAudio, setMuteAudio] = useState<boolean>(false);
+  const [muteVideo, setMuteVideo] = useState<boolean>(false);
 
   const [peers, dispatch] = useReducer(peerReducer, {});
 
@@ -48,14 +51,12 @@ export const SocketProvider: React.FC<props> = ({ children }) => {
 
   useEffect(() => {
     const userId = uuidv4();
-    const newpeer = new Peer(userId,
-      {
+    const newpeer = new Peer(userId, {
       host: "webrtcserver.shahbaz42.live",
       port: 443,
       path: "/myapp",
       secure: true,
-    } 
-  );
+    });
     setUser(newpeer);
 
     fetchUserFeed();
@@ -89,11 +90,49 @@ export const SocketProvider: React.FC<props> = ({ children }) => {
       });
     });
 
+    user.on("close", function () {
+      console.log("peer is closed");
+    });
+
     socket.emit("ready");
   }, [user, stream]);
 
+  // beforeunload event is fired when the window, the document and its resources are about to be unloaded.
+  useEffect(() => {
+    console.log("adding event listener");
+
+    window.addEventListener("beforeunload", (event) => {
+      // call preventDefault to stop the browser from closing
+
+      event.preventDefault();
+
+      prompt("Are you sure you want to leave?");
+      user?.destroy();
+      socket.close();
+    });
+
+    return () => {
+      window.removeEventListener("beforeunload", () => {
+        socket.close();
+      });
+    };
+  }, []);
+
   return (
-    <SocketContext.Provider value={{ socket, user, stream, peers }}>
+    <SocketContext.Provider
+      value={{
+        socket,
+        user,
+        stream,
+        peers,
+        disconnect,
+        setDisconnect,
+        muteAudio,
+        setMuteAudio,
+        muteVideo,
+        setMuteVideo,
+      }}
+    >
       {children}
     </SocketContext.Provider>
   );
