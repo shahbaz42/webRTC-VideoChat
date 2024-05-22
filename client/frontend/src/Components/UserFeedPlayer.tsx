@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-const UserFeedPlayer: React.FC<{ stream?: MediaStream }> = ({ stream }) => {
+const UserFeedPlayer: React.FC<{ stream?: MediaStream, muted?:boolean }> = ({ stream, muted }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -15,7 +15,7 @@ const UserFeedPlayer: React.FC<{ stream?: MediaStream }> = ({ stream }) => {
         className="rounded-xl object-cover "
         ref={videoRef}
         style={{  }}
-        muted={false}
+        muted={muted}
         autoPlay
       />
     </>

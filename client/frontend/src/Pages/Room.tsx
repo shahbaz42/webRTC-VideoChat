@@ -21,7 +21,7 @@ const Room: React.FC = () => {
       {/* roomId: {id} */}
 
       <div className="fixed bottom-2 max-w-40 right-2 p-0">
-        <UserFeedPlayer stream={stream} />
+        <UserFeedPlayer stream={stream} muted={true} />
       </div>
 
       <div className="flex flex-col items-center justify-center px-2">
@@ -51,7 +51,7 @@ const Room: React.FC = () => {
 
         {Object.keys(peers).map((peerId) => (
           <div key={peerId} className="py-1" >
-            <UserFeedPlayer key={peerId} stream={peers[peerId].stream} />
+            <UserFeedPlayer key={peerId} stream={peers[peerId].stream} muted={false} />
           </div>
         ))}
       </div>
