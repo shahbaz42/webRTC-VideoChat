@@ -6,8 +6,8 @@ import { v4 as uuidv4 } from "uuid";
 import { peerReducer } from "../Reducers/peerReducers";
 import { addPeerAction } from "../Actions/peerAction";
 
-const ws_server = "webrtcserver.shahbaz42.live";
-// const ws_server = "localhost:5000";
+// const ws_server = "webrtcserver.shahbaz42.live";
+const ws_server = "localhost:8007";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const SocketContext = createContext<any | null>(null);
@@ -52,11 +52,19 @@ export const SocketProvider: React.FC<props> = ({ children }) => {
   useEffect(() => {
     const userId = uuidv4();
     const newpeer = new Peer(userId, {
-      host: "webrtcserver.shahbaz42.live",
+      host: "peerserver.shahbaz42.live",
       port: 443,
-      path: "/myapp",
+      path: "/peerjs",
       secure: true,
     });
+
+    // const newpeer = new Peer(userId, {
+    //   host: "localhost",
+    //   port: 8008,
+    //   path: "/peerjs",
+    //   // secure: true,
+    // });
+
     setUser(newpeer);
 
     fetchUserFeed();
@@ -80,6 +88,12 @@ export const SocketProvider: React.FC<props> = ({ children }) => {
       });
     });
 
+    socket.on("user-left", ({peerId}) => {
+      console.log("user left: ", peerId)
+
+      // Add logic to remove participants.
+    })
+
     user.on("call", (call) => {
       // what to do when other group call you  when you joined.
       console.log("receiving call from ", call.peer);
@@ -98,25 +112,7 @@ export const SocketProvider: React.FC<props> = ({ children }) => {
   }, [user, stream]);
 
   // beforeunload event is fired when the window, the document and its resources are about to be unloaded.
-  useEffect(() => {
-    console.log("adding event listener");
 
-    window.addEventListener("beforeunload", (event) => {
-      // call preventDefault to stop the browser from closing
-
-      event.preventDefault();
-
-      prompt("Are you sure you want to leave?");
-      user?.destroy();
-      socket.close();
-    });
-
-    return () => {
-      window.removeEventListener("beforeunload", () => {
-        socket.close();
-      });
-    };
-  }, []);
 
   return (
     <SocketContext.Provider

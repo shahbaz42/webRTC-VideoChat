@@ -14,6 +14,7 @@ const Room: React.FC = () => {
     setMuteAudio,
     muteVideo,
     setMuteVideo,
+    setDisconnect
   } = useContext(SocketContext);
 
   useEffect(() => {
@@ -24,6 +25,10 @@ const Room: React.FC = () => {
       });
     }
   }, [id, user, socket]);
+
+  const disconnectCall = () => {
+    setDisconnect(true)
+  }
 
   return (
     <div className="flex items-center justify-center h-screen w-screen">
@@ -134,7 +139,10 @@ const Room: React.FC = () => {
         </button>
 
         {/* disconnect button */}
-        <button className="btn rounded-full bg-red-500 hover:bg-red-400 mx-1">
+        <button
+          onClick={ disconnectCall }
+          className="btn rounded-full bg-red-500 hover:bg-red-400 mx-1"
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="h-6 w-6"
@@ -163,7 +171,7 @@ const Room: React.FC = () => {
               <input
                 type="text"
                 value={window.location.href}
-                onChange={()=>{}}
+                onChange={() => {}}
                 className="mr-2 input input-bordered input-primary w-full max-w-xs"
               />
               <button
