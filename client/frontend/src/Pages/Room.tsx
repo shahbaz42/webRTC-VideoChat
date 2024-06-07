@@ -16,7 +16,6 @@ const Room: React.FC = () => {
     setMuteAudio,
     muteVideo,
     setMuteVideo,
-    setDisconnect,
   } = useContext(SocketContext);
 
   const disconnectCall = () => {
