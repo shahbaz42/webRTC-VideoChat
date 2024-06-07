@@ -8,6 +8,7 @@ const roomHandler = (socket: Socket) => {
   // Below two function will be called
   // when the client emits the event to join or create a room
   const createNewRoom = () => {
+    console.log("User has created a new room");
     const roomId = uuidv4(); // Create a random room ID
     socket.join(roomId); // Join the room
     rooms[roomId] = []; // create new room in DB
@@ -34,8 +35,19 @@ const roomHandler = (socket: Socket) => {
     }
   };
 
+  const disconnectPeerFromRoom = ({ roomId, peerId }: IRoomParams) => {
+    console.log('disconnect request from', peerId);
+    console.log('room id', roomId);
+    if (rooms[roomId]) {
+      socket.join(roomId); // Join the room (to get only room events)
+      rooms[roomId] = rooms[roomId].filter((id) => id !== peerId); // Remove the peer ID from the room
+      socket.to(roomId).emit("user-disconnected", { peerId });
+    }
+  };
+
   socket.on("create-new-room", createNewRoom);
   socket.on("join-existing-room", joinExistingRoom);
+  socket.on("disconnect-request", disconnectPeerFromRoom);
 };
 
 export default roomHandler;

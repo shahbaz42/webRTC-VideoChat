@@ -10,7 +10,7 @@ export const addPeerAction = (peerId: string, stream: MediaStream) => ({
 });
 
 export const removePeerAction = (peerId: string) => ({
-  type: ADD_PEER,
+  type: REMOVE_PEER,
   payload: {
     peerId,
   },

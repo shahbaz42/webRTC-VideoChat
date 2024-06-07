@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Peer } from "peerjs";
 import { v4 as uuidv4 } from "uuid";
 import { peerReducer } from "../Reducers/peerReducers";
-import { addPeerAction } from "../Actions/peerAction";
+import { addPeerAction, removePeerAction } from "../Actions/peerAction";
 
 const ws_server = "https://webrtcserver.shahbaz42.live";
 // const ws_server = "localhost:8007";
@@ -88,10 +88,8 @@ export const SocketProvider: React.FC<props> = ({ children }) => {
       });
     });
 
-    socket.on("user-left", ({peerId}) => {
-      console.log("user left: ", peerId)
-
-      // Add logic to remove participants.
+    socket.on("user-disconnected", ({peerId}) => {
+      dispatch(removePeerAction(peerId))
     })
 
     user.on("call", (call) => {
@@ -112,7 +110,6 @@ export const SocketProvider: React.FC<props> = ({ children }) => {
   }, [user, stream]);
 
   // beforeunload event is fired when the window, the document and its resources are about to be unloaded.
-
 
   return (
     <SocketContext.Provider

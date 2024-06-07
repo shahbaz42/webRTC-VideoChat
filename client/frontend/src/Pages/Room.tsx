@@ -2,9 +2,11 @@ import { useContext, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { SocketContext } from "../Context/SocketContext";
 import UserFeedPlayer from "../Components/UserFeedPlayer";
+import { useNavigate } from "react-router-dom";
 
 const Room: React.FC = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const {
     socket,
     user,
@@ -14,8 +16,18 @@ const Room: React.FC = () => {
     setMuteAudio,
     muteVideo,
     setMuteVideo,
-    setDisconnect
+    setDisconnect,
   } = useContext(SocketContext);
+
+  const disconnectCall = () => {
+    console.log("This user is attempting to disconnect call");
+    socket.emit("disconnect-request", {
+      roomId: id,
+      peerId: user._id,
+    });
+    user.destroy();
+    navigate("/");
+  };
 
   useEffect(() => {
     if (user) {
@@ -26,9 +38,15 @@ const Room: React.FC = () => {
     }
   }, [id, user, socket]);
 
-  const disconnectCall = () => {
-    setDisconnect(true)
-  }
+  useEffect(() => {
+    const handleUnload = () => {
+      disconnectCall();
+    };
+    window.addEventListener("unload", handleUnload);
+    return () => {
+      window.removeEventListener("unload", handleUnload);
+    };
+  }, []);
 
   return (
     <div className="flex items-center justify-center h-screen w-screen">
@@ -37,6 +55,43 @@ const Room: React.FC = () => {
       {/* self-view box */}
       <div className="fixed bottom-24 max-w-52 max-h-36 right-2 p-0">
         <UserFeedPlayer stream={stream} muted={true} />
+      </div>
+
+      <div className="flex flex-col items-center justify-center px-2">
+        {Object.keys(peers).length === 0 && (
+          <div className="flex flex-col items-center justify-center">
+            <h1 className="text-2xl text-center mb-4">
+              No participants in the room
+            </h1>
+
+            <div className="flex items-center justify-center">
+              <input
+                type="text"
+                value={window.location.href}
+                onChange={() => {}}
+                className="mr-2 input input-bordered input-primary w-full max-w-xs"
+              />
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                }}
+                className="btn btn-primary"
+              >
+                Copy Link
+              </button>
+            </div>
+          </div>
+        )}
+
+        {Object.keys(peers).map((peerId) => (
+          <div key={peerId} className="py-1">
+            <UserFeedPlayer
+              key={peerId}
+              stream={peers[peerId].stream}
+              muted={false}
+            />
+          </div>
+        ))}
       </div>
 
       {/* meet controls box */}
@@ -140,7 +195,7 @@ const Room: React.FC = () => {
 
         {/* disconnect button */}
         <button
-          onClick={ disconnectCall }
+          onClick={disconnectCall}
           className="btn rounded-full bg-red-500 hover:bg-red-400 mx-1"
         >
           <svg
@@ -158,43 +213,6 @@ const Room: React.FC = () => {
             />
           </svg>
         </button>
-      </div>
-
-      <div className="flex flex-col items-center justify-center px-2">
-        {Object.keys(peers).length === 0 && (
-          <div className="flex flex-col items-center justify-center">
-            <h1 className="text-2xl text-center mb-4">
-              No participants in the room
-            </h1>
-
-            <div className="flex items-center justify-center">
-              <input
-                type="text"
-                value={window.location.href}
-                onChange={() => {}}
-                className="mr-2 input input-bordered input-primary w-full max-w-xs"
-              />
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.href);
-                }}
-                className="btn btn-primary"
-              >
-                Copy Link
-              </button>
-            </div>
-          </div>
-        )}
-
-        {Object.keys(peers).map((peerId) => (
-          <div key={peerId} className="py-1">
-            <UserFeedPlayer
-              key={peerId}
-              stream={peers[peerId].stream}
-              muted={false}
-            />
-          </div>
-        ))}
       </div>
     </div>
   );
