@@ -6,8 +6,8 @@ import { v4 as uuidv4 } from "uuid";
 import { peerReducer } from "../Reducers/peerReducers";
 import { addPeerAction } from "../Actions/peerAction";
 
-// const ws_server = "webrtcserver.shahbaz42.live";
-const ws_server = "localhost:8007";
+const ws_server = "https://webrtcserver.shahbaz42.live";
+// const ws_server = "localhost:8007";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const SocketContext = createContext<any | null>(null);
