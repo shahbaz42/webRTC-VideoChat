@@ -11,12 +11,21 @@ const Room: React.FC = () => {
     socket,
     user,
     stream,
+    setStream,
     peers,
     muteAudio,
     setMuteAudio,
     muteVideo,
     setMuteVideo,
   } = useContext(SocketContext);
+
+  const fetchUserFeed = async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true,
+    });
+    setStream(stream);
+  };
 
   const disconnectCall = () => {
     console.log("This user is attempting to disconnect call");
@@ -38,6 +47,7 @@ const Room: React.FC = () => {
   }, [id, user, socket]);
 
   useEffect(() => {
+    fetchUserFeed();
     const handleUnload = () => {
       disconnectCall();
     };
