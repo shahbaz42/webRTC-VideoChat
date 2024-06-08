@@ -1,7 +1,7 @@
 import SocketIoClient from "socket.io-client";
 import { createContext, useEffect, useReducer, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Peer } from "peerjs";
+import { MediaConnection, Peer } from "peerjs";
 import { v4 as uuidv4 } from "uuid";
 import { peerReducer } from "../Reducers/peerReducers";
 import { addPeerAction, removePeerAction } from "../Actions/peerAction";
@@ -10,7 +10,25 @@ const ws_server = "https://webrtcserver.shahbaz42.live";
 // const ws_server = "localhost:8007";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const SocketContext = createContext<any | null>(null);
+export interface SocketContextType {
+  socket: any;
+  user: Peer | undefined;
+  stream: MediaStream | undefined;
+  setStream: React.Dispatch<React.SetStateAction<MediaStream | undefined>>;
+  peers: { [key: string]: { stream: MediaStream } };
+  disconnect: boolean;
+  setDisconnect: React.Dispatch<React.SetStateAction<boolean>>;
+  muteAudio: boolean;
+  setMuteAudio: React.Dispatch<React.SetStateAction<boolean>>;
+  muteVideo: boolean;
+  setMuteVideo: React.Dispatch<React.SetStateAction<boolean>>;
+  peerCallMap: { [key: string]: MediaConnection };
+  setPeerCallMap: React.Dispatch<
+    React.SetStateAction<{ [key: string]: MediaConnection }>
+  >;
+}
+
+export const SocketContext = createContext<SocketContextType | null>(null);
 
 const socket = SocketIoClient(ws_server, {
   withCredentials: false,
@@ -28,6 +46,9 @@ export const SocketProvider: React.FC<props> = ({ children }) => {
   const [disconnect, setDisconnect] = useState<boolean>(false);
   const [muteAudio, setMuteAudio] = useState<boolean>(false);
   const [muteVideo, setMuteVideo] = useState<boolean>(false);
+  const [peerCallMap, setPeerCallMap] = useState<{
+    [key: string]: MediaConnection;
+  }>({});
 
   const [peers, dispatch] = useReducer(peerReducer, {});
 
@@ -70,6 +91,7 @@ export const SocketProvider: React.FC<props> = ({ children }) => {
 
     socket.on("user-joined", ({ peerId }) => {
       const call = user.call(peerId, stream);
+      setPeerCallMap((prev) => ({ ...prev, [peerId]: call }));
       console.log("calling the new peer", peerId);
 
       call.on("stream", (stream) => {
@@ -77,16 +99,23 @@ export const SocketProvider: React.FC<props> = ({ children }) => {
       });
     });
 
-    socket.on("user-disconnected", ({peerId}) => {
-      dispatch(removePeerAction(peerId))
-    })
+    socket.on("user-disconnected", ({ peerId }) => {
+      dispatch(removePeerAction(peerId));
+      setPeerCallMap((prev) => {
+        delete prev[peerId];
+        return prev;
+      });
+    });
 
     user.on("call", (call) => {
       // what to do when other group call you  when you joined.
       console.log("receiving call from ", call.peer);
+      setPeerCallMap((prev) => ({ ...prev, [call.peer]: call }));
 
       call.answer(stream);
       call.on("stream", (stream) => {
+        console.log("recieved call stream audio track: ", stream.getAudioTracks())
+        console.log("recieved call stream videoTrack track: ", stream.getVideoTracks())
         dispatch(addPeerAction(call.peer, stream));
       });
     });
@@ -114,6 +143,8 @@ export const SocketProvider: React.FC<props> = ({ children }) => {
         setMuteAudio,
         muteVideo,
         setMuteVideo,
+        peerCallMap,
+        setPeerCallMap,
       }}
     >
       {children}

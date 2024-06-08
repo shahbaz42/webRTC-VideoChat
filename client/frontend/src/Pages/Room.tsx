@@ -1,6 +1,6 @@
 import { useContext, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { SocketContext } from "../Context/SocketContext";
+import { SocketContext, SocketContextType } from "../Context/SocketContext";
 import UserFeedPlayer from "../Components/UserFeedPlayer";
 import { useNavigate } from "react-router-dom";
 
@@ -17,7 +17,9 @@ const Room: React.FC = () => {
     setMuteAudio,
     muteVideo,
     setMuteVideo,
-  } = useContext(SocketContext);
+    peerCallMap,
+    setPeerCallMap
+  } = useContext(SocketContext) as SocketContextType;
 
   const fetchUserFeed = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -27,11 +29,99 @@ const Room: React.FC = () => {
     setStream(stream);
   };
 
+  const stopResumeVideo = async () => {
+    const videoTracks = stream?.getVideoTracks();
+    if(!videoTracks) return;
+
+    if(videoTracks[0].readyState === "live") {
+      videoTracks[0].stop();
+
+      Object.keys(peerCallMap).forEach((peerId) => {
+        const call = peerCallMap[peerId];
+        call.peerConnection.getSenders().forEach((sender) => {
+          if (sender.track?.kind === "video") {
+            sender.replaceTrack(videoTracks[0]);
+          }
+        });
+      });
+
+      setMuteVideo(true);
+    } else {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: false,
+      });
+      stream?.removeTrack(videoTracks[0]);
+      stream?.addTrack(newStream.getVideoTracks()[0]);
+
+      Object.keys(peerCallMap).forEach((peerId) => {
+        const call = peerCallMap[peerId];
+        call.peerConnection.getSenders().forEach((sender) => {
+          if (sender.track?.kind === "video") {
+            sender.replaceTrack(newStream.getVideoTracks()[0]);
+          }
+        });
+      });
+      setMuteVideo(false);
+    }
+  };
+
+  const stopResumeAudio = async () => {
+    const audioTracks = stream?.getAudioTracks();
+    if(!audioTracks) return;
+
+    if(audioTracks[0].readyState === "live") {
+      audioTracks[0].stop();
+
+      Object.keys(peerCallMap).forEach((peerId) => {
+        const call = peerCallMap[peerId];
+        call.peerConnection.getSenders().forEach((sender) => {
+          if (sender.track?.kind === "audio") {
+            sender.replaceTrack(audioTracks[0]);
+          }
+        });
+      });
+      setMuteAudio(true);
+
+    } else {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: false,
+        audio: true,
+      });
+      stream?.removeTrack(audioTracks[0]);
+      stream?.addTrack(newStream.getAudioTracks()[0]);
+
+      Object.keys(peerCallMap).forEach((peerId) => {
+        const call = peerCallMap[peerId];
+        call.peerConnection.getSenders().forEach((sender) => {
+          if (sender.track?.kind === "audio") {
+            sender.replaceTrack(newStream.getAudioTracks()[0]);
+          }
+        });
+      });
+      setMuteAudio(false);
+    }
+  }
+
   const disconnectCall = () => {
+    if (stream) {
+      const tracks = stream.getTracks();
+      tracks.forEach((track) => {
+        track.stop();
+      });
+    }
+
+    if (!user) return;
     console.log("This user is attempting to disconnect call");
+    const peerId = (user as any)._id;
     socket.emit("disconnect-request", {
       roomId: id,
-      peerId: user._id,
+      peerId,
+    });
+
+    setPeerCallMap((prev) => {
+      delete prev[peerId];
+      return prev;
     });
     user.destroy();
     navigate("/");
@@ -41,7 +131,7 @@ const Room: React.FC = () => {
     if (user) {
       socket.emit("join-existing-room", {
         roomId: id,
-        peerId: user._id,
+        peerId: (user as any)._id,
       });
     }
   }, [id, user, socket]);
@@ -110,7 +200,7 @@ const Room: React.FC = () => {
           className={`btn btn-circle mx-1 ${
             muteAudio ? "bg-red-500 hover:bg-red-400" : ""
           } `}
-          onClick={() => setMuteAudio(!muteAudio)}
+          onClick={() => stopResumeAudio()}
         >
           {muteAudio ? (
             <svg
@@ -148,7 +238,7 @@ const Room: React.FC = () => {
           className={`btn btn-circle mx-1 ${
             muteVideo ? "bg-red-500 hover:bg-red-400" : ""
           } `}
-          onClick={() => setMuteVideo(!muteVideo)}
+          onClick={() => stopResumeVideo()}
         >
           {muteVideo ? (
             <svg
